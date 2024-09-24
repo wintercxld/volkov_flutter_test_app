@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
 
 enum TaskStatus { pending, completed }
 
@@ -42,13 +41,6 @@ class TaskManager<T extends Task> {
 
   List<T> getPendingTasks() {
     return tasks.where((task) => task.status == TaskStatus.pending).toList();
-  }
-
-  Future<List<T>> fetchTasks() async {
-    return await Future.delayed(
-      const Duration(seconds: 2),
-          () => tasks,
-    );
   }
 }
 
@@ -103,48 +95,33 @@ class _MyTaskScreenState extends State<TaskScreen> {
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
       ),
-      body: FutureBuilder<List<Task>>(
-        future: widget.taskManager.fetchTasks(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('Нет доступных задач.'));
-          }
-
-          final tasks = snapshot.data!;
-
-          return ListView.builder(
-            itemCount: tasks.length,
-            itemBuilder: (context, index) {
-              final task = tasks[index];
-              return ListTile(
-                title: Text(task.title),
-                subtitle: Text(task.status.statusLabel),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (task.status == TaskStatus.pending)
-                      IconButton(
-                        icon: const Icon(Icons.check),
-                        onPressed: () {
-                          setState(() {
-                            task.complete();
-                          });
-                        },
-                      ),
-                    IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () {
-                        _removeTask(index);
-                      },
-                    ),
-                  ],
+      body: ListView.builder(
+        itemCount: widget.taskManager.tasks.length,
+        itemBuilder: (context, index) {
+          final task = widget.taskManager.tasks[index];
+          return ListTile(
+            title: Text(task.title),
+            subtitle: Text(task.status.statusLabel),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (task.status == TaskStatus.pending)
+                  IconButton(
+                    icon: const Icon(Icons.check),
+                    onPressed: () {
+                      setState(() {
+                        task.complete();
+                      });
+                    },
+                  ),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () {
+                    _removeTask(index);
+                  },
                 ),
-              );
-            },
+              ],
+            ),
           );
         },
       ),
