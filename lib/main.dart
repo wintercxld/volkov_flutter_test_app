@@ -95,35 +95,48 @@ class _MyTaskScreenState extends State<TaskScreen> {
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
       ),
-      body: ListView.builder(
-        itemCount: widget.taskManager.tasks.length,
-        itemBuilder: (context, index) {
-          final task = widget.taskManager.tasks[index];
-          return ListTile(
-            title: Text(task.title),
-            subtitle: Text(task.status.statusLabel),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (task.status == TaskStatus.pending)
-                  IconButton(
-                    icon: const Icon(Icons.check),
-                    onPressed: () {
-                      setState(() {
-                        task.complete();
-                      });
-                    },
-                  ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () {
-                    _removeTask(index);
-                  },
-                ),
-              ],
+      body: Column(
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'TO-DO список',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.normal),
             ),
-          );
-        },
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: widget.taskManager.tasks.length,
+              itemBuilder: (context, index) {
+                final task = widget.taskManager.tasks[index];
+                return ListTile(
+                  title: Text(task.title),
+                  subtitle: Text(task.status.statusLabel),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (task.status == TaskStatus.pending)
+                        IconButton(
+                          icon: const Icon(Icons.check),
+                          onPressed: () {
+                            setState(() {
+                              task.complete();
+                            });
+                          },
+                        ),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () {
+                          _removeTask(index);
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
