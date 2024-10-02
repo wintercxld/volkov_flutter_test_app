@@ -6,8 +6,10 @@ class Task {
   String title;
   String description;
   TaskStatus status;
+  String imagePath;
 
-  Task(this.title, this.description, [this.status = TaskStatus.pending]);
+  Task(this.title, this.description, this.imagePath,
+      [this.status = TaskStatus.pending]);
 
   void complete() {
     status = TaskStatus.completed;
@@ -48,17 +50,25 @@ class TaskManager<T extends Task> {
 class MyApp extends StatelessWidget {
   final TaskManager<Task> taskManager = TaskManager<Task>();
 
-  MyApp() {
-    // Добавляем несколько задач при инициализации
-    taskManager.addTask(Task('Задача 1', 'Описание задачи 1'));
-    taskManager.addTask(Task('Задача 2', 'Описание задачи 2'));
-    taskManager.addTask(Task('Задача 3', 'Описание задачи 3'));
-    taskManager.addTask(Task('Задача 4', 'Описание задачи 4'));
-    taskManager.addTask(Task('Задача 5', 'Описание задачи 5'));
-    taskManager.addTask(Task('Задача 6', 'Описание задачи 6'));
-    taskManager.addTask(Task('Задача 7', 'Описание задачи 7'));
-    taskManager.addTask(Task('Задача 8', 'Описание задачи 8'));
-    taskManager.addTask(Task('Задача 9', 'Описание задачи 9'));
+  MyApp({super.key}) {
+    taskManager.addTask(Task('Задача 1', 'Описание задачи 1',
+        'images/face-with-raised-eyebrow.png'));
+    taskManager.addTask(Task('Задача 2', 'Описание задачи 2',
+        'images/face-with-raised-eyebrow.png'));
+    taskManager.addTask(Task('Задача 3', 'Описание задачи 3',
+        'images/face-with-raised-eyebrow.png'));
+    taskManager.addTask(Task('Задача 4', 'Описание задачи 4',
+        'images/face-with-raised-eyebrow.png'));
+    taskManager.addTask(Task('Задача 5', 'Описание задачи 5',
+        'images/face-with-raised-eyebrow.png'));
+    taskManager.addTask(Task('Задача 6', 'Описание задачи 6',
+        'images/face-with-raised-eyebrow.png'));
+    taskManager.addTask(Task('Задача 7', 'Описание задачи 7',
+        'images/face-with-raised-eyebrow.png'));
+    taskManager.addTask(Task('Задача 8', 'Описание задачи 8',
+        'images/face-with-raised-eyebrow.png'));
+    taskManager.addTask(Task('Задача 9', 'Описание задачи 9',
+        'images/face-with-raised-eyebrow.png'));
   }
 
   @override
@@ -78,7 +88,7 @@ class MyApp extends StatelessWidget {
 class TaskScreen extends StatefulWidget {
   final TaskManager<Task> taskManager;
 
-  const TaskScreen({Key? key, required this.taskManager}) : super(key: key);
+  const TaskScreen({super.key, required this.taskManager});
 
   @override
   _MyTaskScreenState createState() => _MyTaskScreenState();
@@ -88,14 +98,19 @@ class _MyTaskScreenState extends State<TaskScreen> {
   final TextEditingController taskTitleController = TextEditingController();
   final TextEditingController taskDescriptionController =
       TextEditingController();
+  final TextEditingController taskImagePathController = TextEditingController();
 
   void _addTask() {
     setState(() {
-      final task =
-          Task(taskTitleController.text, taskDescriptionController.text);
+      final task = Task(
+        taskTitleController.text,
+        taskDescriptionController.text,
+        taskImagePathController.text,
+      );
       widget.taskManager.addTask(task);
       taskTitleController.clear();
       taskDescriptionController.clear();
+      taskImagePathController.clear();
     });
   }
 
@@ -138,8 +153,7 @@ class _MyTaskScreenState extends State<TaskScreen> {
                       leading: SizedBox(
                         width: 50.0,
                         height: 50.0,
-                        child:
-                            Image.asset('images/face-with-raised-eyebrow.png'),
+                        child: Image.asset(task.imagePath),
                       ),
                       title: Text(task.title),
                       subtitle: Text(task.status.statusLabel),
@@ -199,6 +213,12 @@ class _MyTaskScreenState extends State<TaskScreen> {
                       decoration: const InputDecoration(
                           hintText: 'Введите описание задачи'),
                     ),
+                    TextField(
+                      controller: taskImagePathController,
+                      // Поле для ввода пути к изображению
+                      decoration: const InputDecoration(
+                          hintText: 'Введите путь к изображению'),
+                    ),
                   ],
                 ),
                 actions: [
@@ -223,7 +243,7 @@ class _MyTaskScreenState extends State<TaskScreen> {
 class TaskDetailScreen extends StatelessWidget {
   final Task task;
 
-  const TaskDetailScreen({Key? key, required this.task}) : super(key: key);
+  const TaskDetailScreen({super.key, required this.task});
 
   @override
   Widget build(BuildContext context) {
@@ -238,7 +258,7 @@ class TaskDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Image.asset(
-              'images/face-with-raised-eyebrow.png',
+              task.imagePath,
               height: 200,
             ),
             const SizedBox(height: 16),
