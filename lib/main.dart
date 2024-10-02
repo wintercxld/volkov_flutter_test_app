@@ -4,12 +4,10 @@ enum TaskStatus { pending, completed }
 
 class Task {
   String title;
-  String description;
   TaskStatus status;
   String imagePath;
 
-  Task(this.title, this.description, this.imagePath,
-      [this.status = TaskStatus.pending]);
+  Task(this.title, this.imagePath, [this.status = TaskStatus.pending]);
 
   void complete() {
     status = TaskStatus.completed;
@@ -51,24 +49,24 @@ class MyApp extends StatelessWidget {
   final TaskManager<Task> taskManager = TaskManager<Task>();
 
   MyApp({super.key}) {
-    taskManager.addTask(Task('Задача 1', 'Описание задачи 1',
-        'images/face-with-raised-eyebrow.png'));
-    taskManager.addTask(Task('Задача 2', 'Описание задачи 2',
-        'images/face-with-raised-eyebrow.png'));
-    taskManager.addTask(Task('Задача 3', 'Описание задачи 3',
-        'images/face-with-raised-eyebrow.png'));
-    taskManager.addTask(Task('Задача 4', 'Описание задачи 4',
-        'images/face-with-raised-eyebrow.png'));
-    taskManager.addTask(Task('Задача 5', 'Описание задачи 5',
-        'images/face-with-raised-eyebrow.png'));
-    taskManager.addTask(Task('Задача 6', 'Описание задачи 6',
-        'images/face-with-raised-eyebrow.png'));
-    taskManager.addTask(Task('Задача 7', 'Описание задачи 7',
-        'images/face-with-raised-eyebrow.png'));
-    taskManager.addTask(Task('Задача 8', 'Описание задачи 8',
-        'images/face-with-raised-eyebrow.png'));
-    taskManager.addTask(Task('Задача 9', 'Описание задачи 9',
-        'images/face-with-raised-eyebrow.png'));
+    taskManager
+        .addTask(Task('Задача 1', 'images/face-with-raised-eyebrow.png'));
+    taskManager
+        .addTask(Task('Задача 2', 'images/face-with-raised-eyebrow.png'));
+    taskManager
+        .addTask(Task('Задача 3', 'images/face-with-raised-eyebrow.png'));
+    taskManager
+        .addTask(Task('Задача 4', 'images/face-with-raised-eyebrow.png'));
+    taskManager
+        .addTask(Task('Задача 5', 'images/face-with-raised-eyebrow.png'));
+    taskManager
+        .addTask(Task('Задача 6', 'images/face-with-raised-eyebrow.png'));
+    taskManager
+        .addTask(Task('Задача 7', 'images/face-with-raised-eyebrow.png'));
+    taskManager
+        .addTask(Task('Задача 8', 'images/face-with-raised-eyebrow.png'));
+    taskManager
+        .addTask(Task('Задача 9', 'images/face-with-raised-eyebrow.png'));
   }
 
   @override
@@ -96,21 +94,15 @@ class TaskScreen extends StatefulWidget {
 
 class _MyTaskScreenState extends State<TaskScreen> {
   final TextEditingController taskTitleController = TextEditingController();
-  final TextEditingController taskDescriptionController =
-      TextEditingController();
-  final TextEditingController taskImagePathController = TextEditingController();
 
   void _addTask() {
     setState(() {
       final task = Task(
         taskTitleController.text,
-        taskDescriptionController.text,
-        taskImagePathController.text,
+        'images/face-with-raised-eyebrow.png',
       );
       widget.taskManager.addTask(task);
       taskTitleController.clear();
-      taskDescriptionController.clear();
-      taskImagePathController.clear();
     });
   }
 
@@ -152,150 +144,75 @@ class _MyTaskScreenState extends State<TaskScreen> {
                       contentPadding: const EdgeInsets.all(8.0),
                       leading: SizedBox(
                         width: 50.0,
-                        height: 50.0,
                         child: Image.asset(task.imagePath),
                       ),
                       title: Text(task.title),
                       subtitle: Text(task.status.statusLabel),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (task.status == TaskStatus.pending)
+                      trailing: SizedBox(
+                        width: 100,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (task.status == TaskStatus.pending)
+                              IconButton(
+                                icon: const Icon(Icons.check),
+                                onPressed: () {
+                                  setState(() {
+                                    task.complete();
+                                  });
+                                },
+                              ),
                             IconButton(
-                              icon: const Icon(Icons.check),
+                              icon: const Icon(Icons.delete),
                               onPressed: () {
-                                setState(() {
-                                  task.complete();
-                                });
+                                _removeTask(index);
                               },
                             ),
-                          IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () {
-                              _removeTask(index);
-                            },
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => TaskDetailScreen(task: task),
-                          ),
-                        );
-                      },
                     ),
                   ),
                 );
               },
             ),
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) {
-              return AlertDialog(
-                title: const Text('Новая задача'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: taskTitleController,
-                      decoration: const InputDecoration(
-                          hintText: 'Введите название задачи'),
-                    ),
-                    TextField(
-                      controller: taskDescriptionController,
-                      decoration: const InputDecoration(
-                          hintText: 'Введите описание задачи'),
-                    ),
-                    TextField(
-                      controller: taskImagePathController,
-                      // Поле для ввода пути к изображению
-                      decoration: const InputDecoration(
-                          hintText: 'Введите путь к изображению'),
-                    ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      _addTask();
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Добавить'),
-                  ),
-                ],
-              );
-            },
-          );
-        },
-        child: const Icon(Icons.emoji_nature),
-      ),
-    );
-  }
-}
-
-class TaskDetailScreen extends StatelessWidget {
-  final Task task;
-
-  const TaskDetailScreen({super.key, required this.task});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Детали задачи'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Image.asset(
-              task.imagePath,
-              height: 200,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              task.title,
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              task.description,
-              style: const TextStyle(fontSize: 18),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 40),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                if (task.status == TaskStatus.pending)
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    icon: const Icon(Icons.check),
-                    label: const Text('Выполнить'),
-                  ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).pop();
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: FloatingActionButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: const Text('Новая задача'),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextField(
+                            controller: taskTitleController,
+                            decoration: const InputDecoration(
+                                hintText: 'Введите название задачи'),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            _addTask();
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Добавить'),
+                        ),
+                      ],
+                    );
                   },
-                  icon: const Icon(Icons.delete),
-                  label: const Text('Удалить'),
-                ),
-              ],
+                );
+              },
+              child: const Icon(Icons.emoji_nature),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
