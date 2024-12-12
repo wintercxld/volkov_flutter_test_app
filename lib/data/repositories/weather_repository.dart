@@ -1,0 +1,78 @@
+import 'package:dio/dio.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import 'package:volkov_flutter_test_app/data/dtos/weather_dto.dart';
+import 'package:volkov_flutter_test_app/data/mappers/weather_mapper.dart';
+import 'package:volkov_flutter_test_app/data/repositories/api_interface.dart';
+import 'package:volkov_flutter_test_app/domain/models/card.dart';
+
+class WeatherRepository extends ApiInterface {
+  static final Dio _dio = Dio()
+    ..interceptors.add(PrettyDioLogger(
+      requestHeader: true,
+      requestBody: true,
+    ));
+
+  static const String _baseUrl = 'https://api.openweathermap.org';
+  static const String _apiKey = '8f94917ee16d3c61a463af36dcb10499';
+
+  // Получаем погоду для списка городов
+  Future<List<CardData>> getWeatherForCities({
+    required List<String> cities,
+    OnErrorCallback? onError,
+  }) async {
+    try {
+      final results = await Future.wait(
+        cities.map((city) async {
+          try {
+            return await loadData(q: city, onError: onError);
+          } catch (e) {
+            onError?.call('Error fetching weather for city $city: $e');
+            return [];
+          }
+        }),
+      );
+
+      return results
+          .whereType<List<CardData>>()
+          .expand((data) => data)
+          .toList();
+    } catch (e) {
+      throw Exception('Error fetching weather for cities: $e');
+    }
+  }
+
+  @override
+  Future<List<CardData>> loadData({
+    String? q,
+    OnErrorCallback? onError,
+  }) async {
+    try {
+      if (q == null || q.isEmpty) {
+        throw ArgumentError('City name (q) must not be null or empty');
+      }
+
+      final String url = '$_baseUrl/data/2.5/weather';
+      final response = await _dio.get<Map<String, dynamic>>(
+        url,
+        queryParameters: {
+          'q': q,
+          'appid': _apiKey,
+          'lang': 'ru',
+          'units': 'metric',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+            'Failed to fetch weather data for $q. Status code: ${response.statusCode}');
+      }
+
+      final dto = WeatherDto.fromJson(response.data as Map<String, dynamic>);
+      final data = dto.toDomain();
+      return [data];
+    } catch (e) {
+      onError?.call(e.toString());
+      return [];
+    }
+  }
+}
