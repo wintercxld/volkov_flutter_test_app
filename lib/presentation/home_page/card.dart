@@ -9,7 +9,6 @@ class _Card extends StatefulWidget {
   final String? imageUrl;
   final OnFavoriteCallback onFavorite;
   final VoidCallback? onTap;
-  final bool isFavorite;
 
   const _Card(this.text,
       {this.icon = Icons.ac_unit_outlined,
@@ -17,13 +16,12 @@ class _Card extends StatefulWidget {
       this.imageUrl,
       this.onFavorite,
       this.onTap,
-      required this.isFavorite});
+  });
 
   factory _Card.fromData(
     CardData data, {
     OnFavoriteCallback onFavorite,
     VoidCallback? onTap,
-    required bool isFavorite,
   }) =>
       _Card(
         data.text,
@@ -32,7 +30,6 @@ class _Card extends StatefulWidget {
         imageUrl: data.imageUrl,
         onFavorite: onFavorite,
         onTap: onTap,
-        isFavorite: isFavorite,
       );
 
   @override
@@ -40,13 +37,7 @@ class _Card extends StatefulWidget {
 }
 
 class _CardState extends State<_Card> {
-  late bool isFavorite;
-
-  @override
-  void initState() {
-    super.initState();
-    isFavorite = widget.isFavorite;
-  }
+  bool isFavorite = false;
 
   @override
   Widget build(BuildContext context) {

@@ -53,6 +53,11 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
 
+  # BLOC
+  flutter_bloc: ^8.1.5
+  equatable: ^2.0.5
+  copy_with_extension_gen: ^5.0.4
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

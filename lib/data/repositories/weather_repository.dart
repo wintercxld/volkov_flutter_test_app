@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:volkov_flutter_test_app/data/dtos/weather_dto.dart';
 import 'package:volkov_flutter_test_app/data/mappers/weather_mapper.dart';
@@ -15,7 +18,28 @@ class WeatherRepository extends ApiInterface {
   static const String _baseUrl = 'https://api.openweathermap.org';
   static const String _apiKey = '8f94917ee16d3c61a463af36dcb10499';
 
-  // Получаем погоду для списка городов
+  List<Map<String, dynamic>> _allCities = [];
+
+  // Загружаем и кэшируем список городов
+  Future<void> _loadCities() async {
+    if (_allCities.isEmpty) {
+      final String data =
+          await rootBundle.loadString('assets/current.city.list.json');
+      _allCities = List<Map<String, dynamic>>.from(json.decode(data));
+    }
+  }
+
+  // Возвращает города на основе пагинации
+  Future<List<String>> _getCitiesPage({int page = 1, int pageSize = 10}) async {
+    await _loadCities();
+
+    return _allCities
+        .skip((page - 1) * pageSize)
+        .take(pageSize)
+        .map((city) => city['name'] as String)
+        .toList();
+  }
+
   Future<List<CardData>> getWeatherForCities({
     required List<String> cities,
     OnErrorCallback? onError,

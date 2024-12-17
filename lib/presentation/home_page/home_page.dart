@@ -1,127 +1,184 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:volkov_flutter_test_app/components/utils/debounce.dart';
 import 'package:volkov_flutter_test_app/domain/models/card.dart';
-import 'package:volkov_flutter_test_app/data/repositories/weather_repository.dart';
 import 'package:volkov_flutter_test_app/presentation/details_page/details_page.dart';
-import 'package:volkov_flutter_test_app/presentation/dialogs/show_dialog.dart';
+import 'package:volkov_flutter_test_app/presentation/home_page/bloc/bloc.dart';
+import 'package:volkov_flutter_test_app/presentation/home_page/bloc/events.dart';
+import 'package:volkov_flutter_test_app/presentation/home_page/bloc/state.dart';
 
 part 'card.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key, required this.title});
-
-  final String title;
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  late Future<List<CardData>?> searchData;
-  final searchController = TextEditingController();
-  final repo = WeatherRepository();
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(body: _Body());
+  }
+}
 
-  final Set<String> favoriteCities = {};
-  List<String> trustedCities = [
-    'New York',
-    'London',
-    'Paris',
-    'Berlin',
-    'Moscow',
-    'Tokyo',
-    'Sydney',
-    'Los Angeles',
-    'Chicago',
-    'San Francisco',
-    'Rome',
-    'Barcelona',
-    'Dubai'
-  ];
+class _Body extends StatefulWidget {
+  const _Body();
+
+  @override
+  State<_Body> createState() => _BodyState();
+}
+
+class _BodyState extends State<_Body> {
+  final searchController = TextEditingController();
+  final scrollController = ScrollController();
 
   @override
   void initState() {
-    super.initState();
-    _loadTrustedCitiesWeather();
-  }
-
-  void _loadTrustedCitiesWeather() {
-    searchData = repo.getWeatherForCities(
-      cities: trustedCities,
-      onError: (e) => showErrorDialog(context, error: e),
-    );
-  }
-
-  void _updateSearchData(String search) {
-    searchData = repo.loadData(q: search);
-    setState(() {});
-  }
-
-  void _toggleFavorite(String city) {
-    setState(() {
-      if (favoriteCities.contains(city)) {
-        favoriteCities.remove(city);
-      } else {
-        favoriteCities.add(city);
-      }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<HomeBloc>().add(const HomeLoadDataEvent());
     });
+
+    scrollController.addListener(_onNextPageListener);
+
+    super.initState();
+  }
+
+  void _onNextPageListener() {
+    if (scrollController.offset > scrollController.position.maxScrollExtent) {
+      final bloc = context.read<HomeBloc>();
+      if (!bloc.state.isPaginationLoading) {
+        bloc.add(HomeLoadDataEvent(
+          search: searchController.text,
+          nextPage: bloc.state.data?.nextPage,
+        ));
+      }
+    }
   }
 
   @override
+  void dispose() {
+    searchController.dispose();
+    scrollController.dispose();
+    super.dispose();
+  }
+
+  // late Future<List<CardData>?> searchData;
+  // final searchController = TextEditingController();
+  // final repo = WeatherRepository();
+  //
+  // final Set<String> favoriteCities = {};
+  // List<String> trustedCities = [
+  //   'New York',
+  //   'London',
+  //   'Paris',
+  //   'Berlin',
+  //   'Moscow',
+  //   'Tokyo',
+  //   'Sydney',
+  //   'Los Angeles',
+  //   'Chicago',
+  //   'San Francisco',
+  //   'Rome',
+  //   'Barcelona',
+  //   'Dubai'
+  // ];
+  //
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _loadTrustedCitiesWeather();
+  // }
+  //
+  // void _loadTrustedCitiesWeather() {
+  //   searchData = repo.getWeatherForCities(
+  //     cities: trustedCities,
+  //     onError: (e) => showErrorDialog(context, error: e),
+  //   );
+  // }
+  //
+  // void _updateSearchData(String search) {
+  //   searchData = repo.loadData(q: search);
+  //   setState(() {});
+  // }
+  //
+  // void _toggleFavorite(String city) {
+  //   setState(() {
+  //     if (favoriteCities.contains(city)) {
+  //       favoriteCities.remove(city);
+  //     } else {
+  //       favoriteCities.add(city);
+  //     }
+  //   });
+  // }
+
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-      ),
-      body: Padding(
-        padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: CupertinoSearchTextField(
-                controller: searchController,
-                onChanged: (search) {
-                  _updateSearchData(search);
-                },
-              ),
+    return Padding(
+      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: CupertinoSearchTextField(
+              controller: searchController,
+              onChanged: (search) {
+                Debounce.run(() => context
+                    .read<HomeBloc>()
+                    .add(HomeLoadDataEvent(search: search)));
+              },
             ),
-            Expanded(
-              child: Center(
-                child: FutureBuilder<List<CardData>?>(
-                  future:
-                      searchController.text.isEmpty ? searchData : searchData,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      var data = snapshot.data!;
-                      return SingleChildScrollView(
-                        child: Column(
-                          children: data.map((city) {
-                            return _Card.fromData(
-                              city,
-                              onFavorite: (String title, bool isFavorite) {
-                                _toggleFavorite(city.text);
-                                _showSnackBar(context, city.text,
-                                    favoriteCities.contains(city.text));
-                              },
-                              onTap: () => _navToDetails(context, city),
-                              isFavorite: favoriteCities.contains(city.text),
-                            );
-                          }).toList(),
+          ),
+          BlocBuilder<HomeBloc, HomeState>(
+            builder: (context, state) => state.error != null
+                ? Text(
+                    state.error ?? '',
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall
+                        ?.copyWith(color: Colors.red),
+                  )
+                : state.isLoading
+                    ? const CircularProgressIndicator()
+                    : Expanded(
+                        child: RefreshIndicator(
+                          onRefresh: _onRefresh,
+                          child: ListView.builder(
+                            controller: scrollController,
+                            padding: EdgeInsets.zero,
+                            itemCount: state.data?.data?.length ?? 0,
+                            itemBuilder: (context, index) {
+                              final data = state.data?.data?[index];
+                              return data != null
+                                  ? _Card.fromData(
+                                      data,
+                                      onFavorite: (title, isFavorite) =>
+                                          _showSnackBar(
+                                              context, title, isFavorite),
+                                      onTap: () => _navToDetails(context, data),
+                                    )
+                                  : const SizedBox.shrink();
+                            },
+                          ),
                         ),
-                      );
-                    } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    }
-                    return const CircularProgressIndicator();
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
+                      ),
+          ),
+          BlocBuilder<HomeBloc, HomeState>(
+            builder: (context, state) => state.isPaginationLoading
+                ? const CircularProgressIndicator()
+                : const SizedBox.shrink(),
+          ),
+        ],
       ),
     );
+  }
+
+  Future<void> _onRefresh() {
+    context
+        .read<HomeBloc>()
+        .add(HomeLoadDataEvent(search: searchController.text));
+    return Future.value(null);
   }
 
   void _navToDetails(BuildContext context, CardData data) {
