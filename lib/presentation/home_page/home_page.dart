@@ -47,9 +47,11 @@ class _BodyState extends State<_Body> {
   }
 
   void _onNextPageListener() {
-    if (scrollController.offset > scrollController.position.maxScrollExtent) {
+    if (scrollController.offset >
+        scrollController.position.maxScrollExtent - 10) {
       final bloc = context.read<HomeBloc>();
-      if (!bloc.state.isPaginationLoading) {
+      if (!bloc.state.isPaginationLoading &&
+          bloc.state.data?.nextPage != null) {
         bloc.add(HomeLoadDataEvent(
           search: searchController.text,
           nextPage: bloc.state.data?.nextPage,
@@ -64,55 +66,6 @@ class _BodyState extends State<_Body> {
     scrollController.dispose();
     super.dispose();
   }
-
-  // late Future<List<CardData>?> searchData;
-  // final searchController = TextEditingController();
-  // final repo = WeatherRepository();
-  //
-  // final Set<String> favoriteCities = {};
-  // List<String> trustedCities = [
-  //   'New York',
-  //   'London',
-  //   'Paris',
-  //   'Berlin',
-  //   'Moscow',
-  //   'Tokyo',
-  //   'Sydney',
-  //   'Los Angeles',
-  //   'Chicago',
-  //   'San Francisco',
-  //   'Rome',
-  //   'Barcelona',
-  //   'Dubai'
-  // ];
-  //
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _loadTrustedCitiesWeather();
-  // }
-  //
-  // void _loadTrustedCitiesWeather() {
-  //   searchData = repo.getWeatherForCities(
-  //     cities: trustedCities,
-  //     onError: (e) => showErrorDialog(context, error: e),
-  //   );
-  // }
-  //
-  // void _updateSearchData(String search) {
-  //   searchData = repo.loadData(q: search);
-  //   setState(() {});
-  // }
-  //
-  // void _toggleFavorite(String city) {
-  //   setState(() {
-  //     if (favoriteCities.contains(city)) {
-  //       favoriteCities.remove(city);
-  //     } else {
-  //       favoriteCities.add(city);
-  //     }
-  //   });
-  // }
 
   Widget build(BuildContext context) {
     return Padding(

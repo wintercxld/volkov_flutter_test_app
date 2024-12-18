@@ -20,7 +20,6 @@ class WeatherRepository extends ApiInterface {
 
   List<Map<String, dynamic>> _allCities = [];
 
-  // Загружаем и кэшируем список городов
   Future<void> _loadCities() async {
     if (_allCities.isEmpty) {
       final String data =
@@ -29,11 +28,21 @@ class WeatherRepository extends ApiInterface {
     }
   }
 
-  // Возвращает города на основе пагинации
-  Future<List<String>> _getCitiesPage({int page = 1, int pageSize = 10}) async {
+  Future<List<String>> _getCitiesPage({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+  }) async {
     await _loadCities();
 
-    return _allCities
+    final filteredCities = search != null && search.isNotEmpty
+        ? _allCities.where((city) {
+            final cityName = (city['name'] as String).toLowerCase();
+            return cityName.contains(search.toLowerCase());
+          }).toList()
+        : _allCities;
+
+    return filteredCities
         .skip((page - 1) * pageSize)
         .take(pageSize)
         .map((city) => city['name'] as String)
@@ -62,6 +71,28 @@ class WeatherRepository extends ApiInterface {
           .toList();
     } catch (e) {
       throw Exception('Error fetching weather for cities: $e');
+    }
+  }
+
+  Future<List<CardData>> getWeatherForPage({
+    required int page,
+    int pageSize = 10,
+    String? search,
+    OnErrorCallback? onError,
+  }) async {
+    try {
+      // Получаем список городов для текущей страницы с учётом фильтрации
+      final cities = await _getCitiesPage(
+        page: page,
+        pageSize: pageSize,
+        search: search,
+      );
+
+      // Загружаем погоду для этих городов
+      return await getWeatherForCities(cities: cities, onError: onError);
+    } catch (e) {
+      onError?.call('Error loading weather for page $page: $e');
+      return [];
     }
   }
 

@@ -2,6 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:volkov_flutter_test_app/data/repositories/weather_repository.dart';
 import 'package:volkov_flutter_test_app/presentation/home_page/bloc/events.dart';
 import 'package:volkov_flutter_test_app/presentation/home_page/bloc/state.dart';
+import 'package:volkov_flutter_test_app/domain/models/home.dart';
+import 'package:volkov_flutter_test_app/domain/models/card.dart';
 
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final WeatherRepository repo;
@@ -13,27 +15,47 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   Future<void> _onLoadData(
       HomeLoadDataEvent event, Emitter<HomeState> emit) async {
     if (event.nextPage == null) {
-      emit(state.copyWith(isLoading: true));
+      emit(state.copyWith(isLoading: true, error: null));
     } else {
-      emit(state.copyWith(isPaginationLoading: true));
+      emit(state.copyWith(isPaginationLoading: true, error: null));
     }
 
     String? error;
 
-    final data = await repo.loadData(
-      q: event.search,
-      onError: (e) => error = e,
-    );
+    try {
+      final List<CardData> cardDataList = await repo.getWeatherForPage(
+        page: event.nextPage ?? 1,
+        pageSize: 10,
+        search: event.search,
+        onError: (e) => error = e,
+      );
 
-    if (event.nextPage != null) {
-      data?.data?.insertAll(0, state.data?.data ?? []);
+      final HomeData newData;
+
+      if (event.nextPage != null && state.data != null) {
+        newData = HomeData(
+          data: [...(state.data?.data ?? []), ...cardDataList],
+          nextPage: (cardDataList.isNotEmpty) ? (event.nextPage! + 1) : null,
+        );
+      } else {
+        newData = HomeData(
+          data: cardDataList,
+          nextPage: cardDataList.isNotEmpty ? 2 : null,
+        );
+      }
+
+      emit(state.copyWith(
+        isLoading: false,
+        isPaginationLoading: false,
+        data: newData,
+        error: error,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        isLoading: false,
+        isPaginationLoading: false,
+        error: e.toString(),
+      ));
     }
-
-    emit(state.copyWith(
-      isLoading: false,
-      isPaginationLoading: false,
-      data: data,
-      error: error,
-    ));
   }
 }
