@@ -1,6 +1,7 @@
 part of 'home_page.dart';
 
-typedef OnFavoriteCallback = void Function(String title, bool isFavorite)?;
+typedef OnFavoriteCallback = void Function(
+    String? id, String title, bool isFavorite)?;
 
 class _Card extends StatefulWidget {
   final String text;
@@ -9,19 +10,25 @@ class _Card extends StatefulWidget {
   final String? imageUrl;
   final OnFavoriteCallback onFavorite;
   final VoidCallback? onTap;
+  final String? id;
+  final bool isFavorited;
 
-  const _Card(this.text,
-      {this.icon = Icons.ac_unit_outlined,
-      required this.descriptionText,
-      this.imageUrl,
-      this.onFavorite,
-      this.onTap,
+  const _Card(
+    this.text, {
+    this.icon = Icons.ac_unit_outlined,
+    required this.descriptionText,
+    this.imageUrl,
+    this.onFavorite,
+    this.onTap,
+    this.id,
+    this.isFavorited = false,
   });
 
   factory _Card.fromData(
     CardData data, {
     OnFavoriteCallback onFavorite,
     VoidCallback? onTap,
+    bool isFavorited = false,
   }) =>
       _Card(
         data.text,
@@ -30,6 +37,8 @@ class _Card extends StatefulWidget {
         imageUrl: data.imageUrl,
         onFavorite: onFavorite,
         onTap: onTap,
+        isFavorited: isFavorited,
+        id: data.id,
       );
 
   @override
@@ -37,7 +46,7 @@ class _Card extends StatefulWidget {
 }
 
 class _CardState extends State<_Card> {
-  bool isFavorite = false;
+  bool isFavorited = false;
 
   @override
   Widget build(BuildContext context) {
@@ -110,13 +119,11 @@ class _CardState extends State<_Card> {
                     bottom: 16,
                   ),
                   child: GestureDetector(
-                    onTap: () {
-                      setState(() => isFavorite = !isFavorite);
-                      widget.onFavorite?.call(widget.text, isFavorite);
-                    },
+                    onTap: () => widget.onFavorite
+                        ?.call(widget.id, widget.text, isFavorited),
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 200),
-                      child: isFavorite
+                      child: isFavorited
                           ? const Icon(
                               Icons.favorite,
                               color: Colors.redAccent,

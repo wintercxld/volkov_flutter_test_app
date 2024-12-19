@@ -1,12 +1,21 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:volkov_flutter_test_app/components/extensions/context_x.dart';
 import 'package:volkov_flutter_test_app/components/utils/debounce.dart';
 import 'package:volkov_flutter_test_app/domain/models/card.dart';
 import 'package:volkov_flutter_test_app/presentation/details_page/details_page.dart';
+import 'package:volkov_flutter_test_app/presentation/favorite_bloc/favorite_bloc.dart';
+import 'package:volkov_flutter_test_app/presentation/favorite_bloc/favorite_event.dart';
+import 'package:volkov_flutter_test_app/presentation/favorite_bloc/favorite_state.dart';
 import 'package:volkov_flutter_test_app/presentation/home_page/bloc/bloc.dart';
 import 'package:volkov_flutter_test_app/presentation/home_page/bloc/events.dart';
 import 'package:volkov_flutter_test_app/presentation/home_page/bloc/state.dart';
+import 'package:volkov_flutter_test_app/presentation/locale_bloc/locale_bloc.dart';
+import 'package:volkov_flutter_test_app/presentation/locale_bloc/locale_events.dart';
+import 'package:volkov_flutter_test_app/presentation/locale_bloc/locale_state.dart';
+
+import '../common/svg_objects.dart';
 
 part 'card.dart';
 
@@ -39,6 +48,7 @@ class _BodyState extends State<_Body> {
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<HomeBloc>().add(const HomeLoadDataEvent());
+      context.read<FavoriteBloc>().add(const LoadFavoritesEvent());
     });
 
     scrollController.addListener(_onNextPageListener);
@@ -72,16 +82,41 @@ class _BodyState extends State<_Body> {
       padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: CupertinoSearchTextField(
-              controller: searchController,
-              onChanged: (search) {
-                Debounce.run(() => context
-                    .read<HomeBloc>()
-                    .add(HomeLoadDataEvent(search: search)));
-              },
-            ),
+          Row(
+            children: [
+              Expanded(
+                flex: 4,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: CupertinoSearchTextField(
+                    controller: searchController,
+                    placeholder: context.locale.search,
+                    onChanged: (search) {
+                      Debounce.run(() => context
+                          .read<HomeBloc>()
+                          .add(HomeLoadDataEvent(search: search)));
+                    },
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () =>
+                    context.read<LocaleBloc>().add(const ChangeLocaleEvent()),
+                child: SizedBox.square(
+                  dimension: 50,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: BlocBuilder<LocaleBloc, LocaleState>(
+                      builder: (context, state) {
+                        return state.currentLocale.languageCode == 'ru'
+                            ? const SvgRu()
+                            : const SvgUk();
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           BlocBuilder<HomeBloc, HomeState>(
             builder: (context, state) => state.error != null
@@ -94,27 +129,34 @@ class _BodyState extends State<_Body> {
                   )
                 : state.isLoading
                     ? const CircularProgressIndicator()
-                    : Expanded(
-                        child: RefreshIndicator(
-                          onRefresh: _onRefresh,
-                          child: ListView.builder(
-                            controller: scrollController,
-                            padding: EdgeInsets.zero,
-                            itemCount: state.data?.data?.length ?? 0,
-                            itemBuilder: (context, index) {
-                              final data = state.data?.data?[index];
-                              return data != null
-                                  ? _Card.fromData(
-                                      data,
-                                      onFavorite: (title, isFavorite) =>
-                                          _showSnackBar(
-                                              context, title, isFavorite),
-                                      onTap: () => _navToDetails(context, data),
-                                    )
-                                  : const SizedBox.shrink();
-                            },
-                          ),
-                        ),
+                    : BlocBuilder<FavoriteBloc, FavoriteState>(
+                        builder: (context, FavoriteState) {
+                          return Expanded(
+                            child: RefreshIndicator(
+                              onRefresh: _onRefresh,
+                              child: ListView.builder(
+                                controller: scrollController,
+                                padding: EdgeInsets.zero,
+                                itemCount: state.data?.data?.length ?? 0,
+                                itemBuilder: (context, index) {
+                                  final data = state.data?.data?[index];
+                                  return data != null
+                                      ? _Card.fromData(
+                                          data,
+                                          onFavorite: _onFavorite,
+                                          isFavorited: FavoriteState
+                                                  .favoritedIds
+                                                  ?.contains(data.id) ==
+                                              true,
+                                          onTap: () =>
+                                              _navToDetails(context, data),
+                                        )
+                                      : const SizedBox.shrink();
+                                },
+                              ),
+                            ),
+                          );
+                        },
                       ),
           ),
           BlocBuilder<HomeBloc, HomeState>(
@@ -141,11 +183,18 @@ class _BodyState extends State<_Body> {
     );
   }
 
+  void _onFavorite(String? id, String title, bool isFavorited) {
+    if (id != null) {
+      context.read<FavoriteBloc>().add(ChangeFavoriteEvent(id));
+      _showSnackBar(context, title, !isFavorited);
+    }
+  }
+
   void _showSnackBar(BuildContext context, String title, bool isFavorite) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(
-          '$title ${isFavorite ? 'в избранном!' : 'не в избранном :('}',
+          '$title ${isFavorite ? context.locale.favorited : context.locale.unfavorited}',
           style: Theme.of(context).textTheme.bodyLarge,
         ),
         backgroundColor: Colors.orangeAccent,

@@ -1,0 +1,9 @@
+{
+  "@@locale": "en",
+
+  "search": "Search",
+  "favorited": "favorited!",
+  "unfavorited": "unfavorited :(",
+
+  "arbEnding": "Чтобы не забыть про отсутствие запятой :)"
+}
