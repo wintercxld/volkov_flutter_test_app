@@ -3,7 +3,7 @@ part of 'home_page.dart';
 typedef OnFavoriteCallback = void Function(
     String? id, String title, bool isFavorite)?;
 
-class _Card extends StatefulWidget {
+class _Card extends StatelessWidget {
   final String text;
   final String descriptionText;
   final IconData icon;
@@ -42,16 +42,9 @@ class _Card extends StatefulWidget {
       );
 
   @override
-  State<_Card> createState() => _CardState();
-}
-
-class _CardState extends State<_Card> {
-  bool isFavorited = false;
-
-  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: widget.onTap,
+      onTap: onTap,
       child: Container(
         margin: const EdgeInsets.all(16),
         constraints: const BoxConstraints(minHeight: 160),
@@ -83,7 +76,7 @@ class _CardState extends State<_Card> {
                     children: [
                       Positioned.fill(
                         child: Image.network(
-                          widget.imageUrl ?? '',
+                          imageUrl ?? '',
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => const Placeholder(),
                         ),
@@ -99,11 +92,11 @@ class _CardState extends State<_Card> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.text,
+                        text,
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       Text(
-                        widget.descriptionText,
+                        descriptionText,
                         style: Theme.of(context).textTheme.bodyLarge,
                       )
                     ],
@@ -119,8 +112,7 @@ class _CardState extends State<_Card> {
                     bottom: 16,
                   ),
                   child: GestureDetector(
-                    onTap: () => widget.onFavorite
-                        ?.call(widget.id, widget.text, isFavorited),
+                    onTap: () => onFavorite?.call(id, text, isFavorited),
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 200),
                       child: isFavorited

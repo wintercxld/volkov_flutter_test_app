@@ -17,6 +17,7 @@ extension WeatherDataDtoToModel on WeatherDto {
       '${name ?? 'UNKNOWN'}, $temperature°C',
       imageUrl: imageUrl,
       descriptionText: _buildDescription(),
+      id: id.toString(),
     );
   }
 
@@ -29,6 +30,6 @@ extension WeatherDataDtoToModel on WeatherDto {
     final windSpeed = wind?.speed != null ? '${wind!.speed} m/s' : 'N/A';
     final windDirection = wind?.deg != null ? '${wind!.deg}°' : 'N/A';
 
-    return 'Погода: $description\nВлажность: $humidity\nДавление: $pressure\nВетер: $windSpeed, $windDirection';
+    return 'Weather description: $description\nHumidity: $humidity\nPressure: $pressure\nWind: $windSpeed, $windDirection';
   }
 }

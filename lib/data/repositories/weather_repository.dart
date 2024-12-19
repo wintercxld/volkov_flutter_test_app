@@ -112,7 +112,7 @@ class WeatherRepository extends ApiInterface {
         queryParameters: {
           'q': q,
           'appid': _apiKey,
-          'lang': 'ru',
+          'lang': 'en',
           'units': 'metric',
         },
       );
